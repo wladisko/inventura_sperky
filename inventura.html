@@ -293,8 +293,8 @@ if(!SR){
     const shown=(lastFinal+' '+finalChunk+interim).trim();
     if(shown){ heard.textContent='„'+shown+'"'; heard.classList.remove('empty'); }
     if(finalChunk){ lastFinal=(lastFinal+' '+finalChunk).trim(); applyParsed(parseSpeech(lastFinal)); }
-    // reštartuj časovač ticha pri každom zvuku (interim aj final)
-    armSilenceStop();
+    // časovač ticha reštartuj LEN keď už nejaký zvuk prišiel (nie hneď po štarte)
+    if(shown){ armSilenceStop(); }
   };
   recog.onend=()=>{ if(listening){ try{recog.start();}catch(e){} } else finishListening(); };
   recog.onerror=(e)=>{
@@ -304,10 +304,10 @@ if(!SR){
   };
 }
 
-// po ~1.4 s ticha automaticky zastav
+// po ~3 s ticha (po tom, ako dohovoríš) automaticky zastav
 function armSilenceStop(){
   if(silenceTimer) clearTimeout(silenceTimer);
-  silenceTimer=setTimeout(()=>{ stopListening(); }, 1400);
+  silenceTimer=setTimeout(()=>{ stopListening(); }, 3000);
 }
 function stopListening(){
   if(!listening) return;
@@ -329,7 +329,8 @@ micBtn.addEventListener('click',()=>{
   micBtn.classList.add('live'); micLabel.textContent='Počúvam…';
   listening=true;
   try{ recog.start(); }catch(e){}
-  armSilenceStop();
+  // časovač ticha sa NEspúšťa tu — naštartuje sa až keď príde prvý zvuk,
+  // takže máš čas začať hovoriť aj po dlhšom rozmýšľaní
 });
 
 //////////////////// STAGE LOGIKA ////////////////////
