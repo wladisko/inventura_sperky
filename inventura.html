@@ -7,25 +7,14 @@
 <title>Inventúra šperkov</title>
 <style>
   :root{
-    --bg:#14110F;
-    --surface:#1F1B18;
-    --surface-2:#2A2521;
-    --line:#3A332D;
-    --ink:#F5EFE7;
-    --ink-dim:#A89C8E;
-    --mv:#E0A458;      /* MV — teplá zlatá */
-    --ny:#7FB3B3;      /* NY — chladné striebro-modrá */
-    --ok:#6FBF73;
-    --bad:#D9756B;
-    --mic:#E0A458;
-    --mic-live:#D9756B;
-    --radius:16px;
-    --mono:'SF Mono',ui-monospace,'Roboto Mono',Menlo,monospace;
+    --bg:#14110F; --surface:#1F1B18; --surface-2:#2A2521; --line:#3A332D;
+    --ink:#F5EFE7; --ink-dim:#A89C8E;
+    --mv:#E0A458; --ny:#7FB3B3; --ok:#6FBF73; --bad:#D9756B; --mic:#E0A458; --mic-live:#D9756B;
+    --radius:16px; --mono:'SF Mono',ui-monospace,'Roboto Mono',Menlo,monospace;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-    overscroll-behavior-y:contain;}
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;overscroll-behavior-y:contain}
   body{min-height:100dvh;display:flex;flex-direction:column}
 
   header{padding:14px 16px 10px;border-bottom:1px solid var(--line);
@@ -33,53 +22,57 @@
   header h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.01em}
   header .sub{font-size:12px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
 
-  /* živý panel rozpoznávania */
   .live{padding:16px;border-bottom:1px solid var(--line);background:var(--surface)}
   .heard{min-height:22px;font-size:13px;color:var(--ink-dim);font-style:italic;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .heard.empty{opacity:.5}
-  .parsed{margin-top:10px;display:flex;align-items:center;gap:12px;min-height:64px}
-  .code{font-family:var(--mono);font-size:40px;font-weight:700;letter-spacing:.02em;
-    line-height:1;white-space:nowrap}
-  .code .pre{padding:2px 6px;border-radius:8px}
-  .code .pre.MV{color:#1a1410;background:var(--mv)}
-  .code .pre.NY{color:#0e1414;background:var(--ny)}
-  .code .pre.unk{color:var(--ink);background:var(--surface-2)}
-  .code.placeholder{color:var(--ink-dim);font-size:24px;font-weight:500;
-    font-family:system-ui,sans-serif;letter-spacing:0}
+
+  .parsed{margin-top:12px;display:flex;align-items:center;gap:10px;min-height:70px}
+
+  /* editor kódu: prefix (scroll) + číslo (klik/kurzor) */
+  .codeEdit{display:flex;align-items:center;gap:4px}
+  .prefixWheel{display:flex;flex-direction:column;align-items:center;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+    padding:2px 4px;user-select:none;min-width:62px}
+  .prefixWheel .arrow{font-size:14px;color:var(--ink-dim);line-height:1;padding:1px 0}
+  .prefixWheel .arrow:active{color:var(--ink)}
+  .prefixWheel .pval{font-family:var(--mono);font-size:26px;font-weight:700;
+    line-height:1.1;padding:2px 4px;border-radius:6px}
+  .prefixWheel .pval.MV{color:var(--mv)} .prefixWheel .pval.NY{color:var(--ny)}
+  .prefixWheel .pval.none{color:var(--ink-dim);font-size:18px}
+
+  .numEdit{font-family:var(--mono);font-size:40px;font-weight:700;letter-spacing:.02em;
+    line-height:1;background:transparent;border:none;border-bottom:2px solid var(--line);
+    color:var(--ink);width:9ch;padding:2px 0 4px;outline:none;text-align:left}
+  .numEdit:focus{border-bottom-color:var(--mic)}
+  .numEdit.empty{color:var(--ink-dim)}
+
   .qty-stage{margin-left:auto;display:flex;align-items:center;gap:8px}
   .qty-stage .n{font-family:var(--mono);font-size:34px;font-weight:700;min-width:48px;
     text-align:center;font-variant-numeric:tabular-nums}
   .qty-stage .lbl{font-size:12px;color:var(--ink-dim)}
-
-  .stepper{display:flex;align-items:center;gap:8px}
-  .step{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);
+  .stepper .step{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);
     background:var(--surface-2);color:var(--ink);font-size:26px;font-weight:600;
     display:flex;align-items:center;justify-content:center;user-select:none}
-  .step:active{background:var(--line)}
+  .stepper .step:active{background:var(--line)}
 
   .warn{margin-top:8px;font-size:12.5px;color:var(--bad);min-height:16px}
 
   .actions{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
-  .mic{flex:1;height:60px;border:none;border-radius:var(--radius);
-    background:var(--mic);color:#1a1410;font-size:17px;font-weight:700;
-    display:flex;align-items:center;justify-content:center;gap:10px;user-select:none}
+  .mic{flex:1;height:60px;border:none;border-radius:var(--radius);background:var(--mic);
+    color:#1a1410;font-size:17px;font-weight:700;display:flex;align-items:center;
+    justify-content:center;gap:10px;user-select:none}
   .mic.live{background:var(--mic-live);color:#fff;animation:pulse 1.2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.72}}
   .mic .dot{width:11px;height:11px;border-radius:50%;background:currentColor}
-  .confirm{width:60px;height:60px;border:none;border-radius:var(--radius);
-    background:var(--ok);color:#0d140d;font-size:26px;font-weight:700;
-    display:flex;align-items:center;justify-content:center}
+  .confirm{width:60px;height:60px;border:none;border-radius:var(--radius);background:var(--ok);
+    color:#0d140d;font-size:26px;font-weight:700;display:flex;align-items:center;justify-content:center}
   .confirm:disabled{opacity:.3}
 
-  /* zoznam */
   .list{flex:1;overflow-y:auto;padding:8px 12px 120px}
-  .row{display:flex;align-items:center;gap:12px;padding:13px 12px;
-    border-bottom:1px solid var(--line)}
+  .row{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid var(--line)}
   .row .rc{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.02em}
-  .row .rc .p.MV{color:var(--mv)}
-  .row .rc .p.NY{color:var(--ny)}
-  .row .rc .p.unk{color:var(--ink-dim)}
+  .row .rc .p.MV{color:var(--mv)} .row .rc .p.NY{color:var(--ny)} .row .rc .p.unk{color:var(--ink-dim)}
   .row .rq{margin-left:auto;display:flex;align-items:center;gap:6px}
   .row .rq .qn{font-family:var(--mono);font-size:20px;font-weight:700;min-width:34px;
     text-align:center;font-variant-numeric:tabular-nums}
@@ -87,38 +80,50 @@
     background:var(--surface-2);color:var(--ink);font-size:19px;font-weight:600;
     display:flex;align-items:center;justify-content:center}
   .mini:active{background:var(--line)}
-  .del{width:34px;height:34px;border-radius:9px;border:1px solid transparent;
-    background:transparent;color:var(--ink-dim);font-size:17px;margin-left:4px}
+  .del{width:34px;height:34px;border-radius:9px;border:1px solid transparent;background:transparent;
+    color:var(--ink-dim);font-size:17px;margin-left:4px}
   .del:active{color:var(--bad)}
   .empty-state{text-align:center;color:var(--ink-dim);padding:48px 24px;font-size:14px;line-height:1.6}
 
-  /* spodná lišta */
-  .foot{position:fixed;left:0;right:0;bottom:0;background:var(--surface);
-    border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;
+  .foot{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+    padding:12px 16px;display:flex;gap:10px;align-items:center;
     padding-bottom:calc(12px + env(safe-area-inset-bottom))}
   .foot .stat{font-size:12px;color:var(--ink-dim);line-height:1.4}
   .foot .stat b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
-  .btn{margin-left:auto;border:1px solid var(--line);background:var(--surface-2);
-    color:var(--ink);border-radius:11px;padding:11px 15px;font-size:14px;font-weight:600}
+  .btn{margin-left:auto;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+    border-radius:11px;padding:11px 15px;font-size:14px;font-weight:600}
   .btn.primary{background:var(--ink);color:#14110F;border-color:var(--ink)}
   .btn:active{opacity:.8}
+  .foot .btn:not(.primary):not(#setupBtn){margin-left:0}
 
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;
-    align-items:flex-end;z-index:50}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:50}
   .modal.show{display:flex}
   .sheet{background:var(--surface);width:100%;border-radius:20px 20px 0 0;
-    padding:20px 18px calc(20px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom));border-top:1px solid var(--line);
+    max-height:86dvh;overflow-y:auto}
   .sheet h2{margin:0 0 4px;font-size:16px}
   .sheet p{margin:0 0 14px;font-size:13px;color:var(--ink-dim);line-height:1.5}
-  .sheet label{display:block;font-size:12px;color:var(--ink-dim);margin:12px 0 5px}
-  .sheet input{width:100%;background:var(--bg);border:1px solid var(--line);
-    color:var(--ink);border-radius:10px;padding:11px 12px;font-size:14px;font-family:var(--mono)}
+  .sheet label{display:block;font-size:12px;color:var(--ink-dim);margin:14px 0 5px}
+  .sheet input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:11px 12px;font-size:14px;font-family:var(--mono)}
   .sheet .sheet-actions{display:flex;gap:10px;margin-top:18px}
   .sheet .sheet-actions .btn{flex:1;margin:0;justify-content:center;text-align:center}
-  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
-    background:var(--ink);color:#14110F;padding:11px 18px;border-radius:11px;
-    font-size:13.5px;font-weight:600;opacity:0;transition:opacity .25s;z-index:60;pointer-events:none;max-width:88%;text-align:center}
+
+  /* prefixy v settings */
+  .prefixList{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pchip{display:flex;align-items:center;gap:6px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-family:var(--mono);
+    font-size:15px;font-weight:600}
+  .pchip .x{color:var(--ink-dim);font-size:14px;padding:0 2px}
+  .pchip .x:active{color:var(--bad)}
+  .addPrefix{display:flex;gap:8px;margin-top:10px}
+  .addPrefix input{flex:1;text-transform:uppercase}
+  .addPrefix button{border:1px solid var(--line);background:var(--ink);color:#14110F;
+    border-radius:10px;padding:0 16px;font-weight:700;font-size:18px}
+
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);
+    color:#14110F;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;opacity:0;
+    transition:opacity .25s;z-index:60;pointer-events:none;max-width:88%;text-align:center}
   .toast.show{opacity:1}
   .unsupported{padding:24px;font-size:14px;line-height:1.6;color:var(--bad)}
 </style>
@@ -132,18 +137,22 @@
 <div class="live">
   <div class="heard empty" id="heard">Klikni na mikrofón a diktuj…</div>
   <div class="parsed">
-    <div class="code placeholder" id="codeView">— —</div>
-    <div class="qty-stage">
-      <div class="stepper">
-        <div class="step" id="minus">−</div>
+    <div class="codeEdit">
+      <div class="prefixWheel" id="prefixWheel">
+        <div class="arrow" id="prefixUp">▲</div>
+        <div class="pval none" id="prefixVal">––</div>
+        <div class="arrow" id="prefixDown">▼</div>
       </div>
+      <input class="numEdit empty" id="numEdit" inputmode="numeric" pattern="[0-9]*"
+             placeholder="––––" autocomplete="off">
+    </div>
+    <div class="qty-stage">
+      <div class="stepper"><div class="step" id="minus">−</div></div>
       <div style="text-align:center">
         <div class="n" id="qtyView">1</div>
         <div class="lbl">ks</div>
       </div>
-      <div class="stepper">
-        <div class="step" id="plus">+</div>
-      </div>
+      <div class="stepper"><div class="step" id="plus">+</div></div>
     </div>
   </div>
   <div class="warn" id="warn"></div>
@@ -163,20 +172,26 @@
 </div>
 
 <div class="foot">
-  <div class="stat">
-    <div><b id="totItems">0</b> položiek · <b id="totQty">0</b> ks</div>
-  </div>
+  <div class="stat"><div><b id="totItems">0</b> položiek · <b id="totQty">0</b> ks</div></div>
   <button class="btn" id="setupBtn">⚙</button>
   <button class="btn primary" id="exportBtn">Export</button>
 </div>
 
-<!-- nastavenie URL -->
+<!-- nastavenia -->
 <div class="modal" id="setupModal">
   <div class="sheet">
-    <h2>Napojenie na Google Sheet</h2>
-    <p>Sem vlož adresu (URL) z Google Apps Scriptu — návod máš v správe. Bez nej sa dá robiť inventúra aj offline a exportovať ako súbor.</p>
-    <label>Adresa Apps Script (Web App URL)</label>
+    <h2>Nastavenia</h2>
+
+    <label>Prefixy kódov (rozpoznávané hlasom aj v editácii)</label>
+    <div class="prefixList" id="prefixList"></div>
+    <div class="addPrefix">
+      <input id="newPrefix" maxlength="4" placeholder="napr. AB" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button id="addPrefixBtn">+</button>
+    </div>
+
+    <label style="margin-top:20px">Adresa Google Sheetu (Apps Script Web App URL)</label>
     <input type="url" id="urlInput" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+
     <div class="sheet-actions">
       <button class="btn" id="setupCancel">Zavrieť</button>
       <button class="btn primary" id="setupSave">Uložiť</button>
@@ -203,231 +218,251 @@
 
 <script>
 //////////////////// ÚLOŽISKO ////////////////////
-const LS_ITEMS='inv_items_v1', LS_URL='inv_url_v1';
-let items = load(LS_ITEMS) || [];   // [{code, qty}]
+const LS_ITEMS='inv_items_v1', LS_URL='inv_url_v1', LS_PREF='inv_prefixes_v1';
+let items = load(LS_ITEMS) || [];
 let scriptUrl = localStorage.getItem(LS_URL) || '';
+let prefixes = load(LS_PREF) || ['MV','NY'];
 
 function load(k){ try{return JSON.parse(localStorage.getItem(k))}catch(e){return null} }
 function save(){ localStorage.setItem(LS_ITEMS, JSON.stringify(items)); }
+function savePrefixes(){ localStorage.setItem(LS_PREF, JSON.stringify(prefixes)); }
 
-//////////////////// STAGING (rozpracovaný riadok) ////////////////////
-let stage = { code:null, qty:1, valid:false };
+//////////////////// STAGE (rozpracovaný riadok) ////////////////////
+// prefixIdx: index do prefixes, alebo -1 = žiadny
+let stage = { prefixIdx: prefixes.indexOf('MV')>=0?prefixes.indexOf('MV'):-1, number:'', qty:1 };
 
-//////////////////// MAPOVANIE REČI -> KÓD ////////////////////
-// Slovník číslic vyslovených slovom (poistka, väčšinou príde rovno číslica)
+//////////////////// MAPOVANIE REČI ////////////////////
 const WORDNUM = {
   'nula':'0','jeden':'1','jedna':'1','dva':'2','dve':'2','tri':'3','štyri':'4','styri':'4',
   'päť':'5','pat':'5','šesť':'6','sest':'6','sedem':'7','osem':'8','deväť':'9','devat':'9'
 };
-
-// Normalizácia prefixu: čokoľvek čo znie ako MV/NY -> presný prefix
-function normalizePrefix(raw){
-  let s = raw.toLowerCase()
-    .replace(/[.,\-_/]/g,' ')
-    .replace(/\s+/g,' ').trim();
-  // prefix nalepený na číslo bez medzery (napr. "mv4770", "ny4016")
-  s = s.replace(/\b(mv|ny)(\d)/g, '$1 $2');
-  // MV varianty
-  s = s.replace(/\b(em\s*vé|em\s*ve|emvé|emve|m\s*v|mv|em\s*v)\b/g,' MV ');
-  // NY varianty (en-ypsilon, eny, en y, n y, enwaj...)
-  s = s.replace(/\b(en\s*ypsilon|en\s*y|eny|enwaj|en\s*waj|n\s*y|ny|en\s*ipsilon)\b/g,' NY ');
+// fonetické varianty -> písmeno (pre MV/NY špeciálne, inak písmeno po písmene)
+function buildPrefixPatterns(){
+  // vráti pole {re, prefix} pre rozpoznanie vyslovených prefixov
+  const pats = [];
+  // špeciálne dobre rozpoznateľné
+  pats.push({re:/\b(em\s*vé|em\s*ve|emvé|emve|m\s*v|mv|em\s*v)\b/g, prefix:'MV'});
+  pats.push({re:/\b(en\s*ypsilon|en\s*y|eny|enwaj|en\s*waj|n\s*y|ny|en\s*ipsilon)\b/g, prefix:'NY'});
+  return pats;
+}
+function normalizeSpeech(raw){
+  let s = raw.toLowerCase().replace(/[.,\-_/]/g,' ').replace(/\s+/g,' ').trim();
+  // prefix nalepený na číslo (mv4770)
+  for(const p of prefixes){
+    const re = new RegExp('\\b('+p.toLowerCase()+')(\\d)','g');
+    s = s.replace(re, '$1 $2');
+  }
+  // fonetické MV/NY varianty
+  for(const {re,prefix} of buildPrefixPatterns()) s = s.replace(re,' '+prefix+' ');
+  // ostatné prefixy z konfigurácie: ak vyslovené ako spojené písmená
+  for(const p of prefixes){
+    if(p==='MV'||p==='NY') continue;
+    const re = new RegExp('\\b'+p.toLowerCase()+'\\b','g');
+    s = s.replace(re,' '+p+' ');
+  }
   return s;
 }
-
-// Z textu vytiahne {prefix, number}
 function parseSpeech(text){
-  let s = normalizePrefix(text);
-  // číslice slovom -> cifry
-  s = s.split(' ').map(w => WORDNUM[w] !== undefined ? WORDNUM[w] : w).join(' ');
-  // ak prefix ostal nalepený na číslo (MV4770) -> oddeľ medzerou
-  s = s.replace(/\b(MV|NY)(\d)/g, '$1 $2');
-  // zlep behy samostatných JEDNOCIFERNÝCH skupín ("4 7 7 0" -> "4770").
-  // Posledná cifra pred slovom "kus" sa NEzlepí (je to počet), aby
-  // "4 7 7 0 1 kus" dalo kód 4770 a počet 1, nie 47701.
-  s = s.replace(/\b\d(?: \d\b)+(?= \d\b (?:kus|kusy|kusov|ks)\b)/g, m => m.replace(/ /g,''));
-  s = s.replace(/\b\d(?: \d\b)+(?! \d\b (?:kus|kusy|kusov|ks)\b)/g, m => m.replace(/ /g,''));
+  let s = normalizeSpeech(text);
+  s = s.split(' ').map(w => WORDNUM[w]!==undefined?WORDNUM[w]:w).join(' ');
+  // oddeľ prefix prilepený k číslu (po uppercasingu)
+  const upPrefixes = prefixes.map(p=>p.toUpperCase());
+  for(const p of upPrefixes){
+    s = s.replace(new RegExp('\\b('+p+')(\\d)','g'),'$1 $2');
+  }
+  // zlep beh jednociferných skupín, okrem cifry počtu pred "kus"
+  s = s.replace(/\b\d(?: \d\b)+(?= \d\b (?:kus|kusy|kusov|ks)\b)/g, m=>m.replace(/ /g,''));
+  s = s.replace(/\b\d(?: \d\b)+(?! \d\b (?:kus|kusy|kusov|ks)\b)/g, m=>m.replace(/ /g,''));
   s = s.replace(/\s+/g,' ').trim();
 
-  // počet: číslo bezprostredne pred slovom "kus/ks"
   const kusIdx = s.search(/\b(kus|kusy|kusov|ks)\b/);
-  let qtyFromKus = null, codePart = s;
-  if(kusIdx > -1){
-    const before = s.slice(0, kusIdx).trim();
-    const qm = before.match(/(\d+)\s*$/);     // posledná číselná skupina pred "kus"
-    if(qm){ qtyFromKus = parseInt(qm[1],10); }
-    // kód hľadáme vo zvyšku (pred počtom + čokoľvek za slovom kus)
+  let qty = null, codePart = s;
+  if(kusIdx>-1){
+    const before = s.slice(0,kusIdx).trim();
+    const qm = before.match(/(\d+)\s*$/);
+    if(qm) qty = parseInt(qm[1],10);
     codePart = before.replace(/(\d+)\s*$/,' ') + ' ' + s.slice(kusIdx).replace(/\b(kus|kusy|kusov|ks)\b/g,' ');
   }
-
-  // prefix hľadáme v kódovej časti
-  let prefix = null;
-  const pm = codePart.match(/\b(MV|NY)\b/);
-  if(pm){ prefix = pm[1]; }
-
-  // číslo kódu = najdlhšia skupina číslic v kódovej časti
-  const digitGroups = (codePart.match(/\d+/g) || []);
-  let number = null;
-  if(digitGroups.length){
-    number = digitGroups.slice().sort((a,b)=>b.length-a.length)[0];
+  // prefix
+  let prefix=null;
+  for(const p of upPrefixes){
+    if(new RegExp('\\b'+p+'\\b').test(codePart)){ prefix=p; break; }
   }
-
-  let code = null;
-  if(number){
-    code = (prefix ? prefix : '') + number;
-  }
-  return { code, prefix, number, qty:qtyFromKus, raw:text };
+  const groups = (codePart.match(/\d+/g)||[]);
+  let number = groups.length ? groups.slice().sort((a,b)=>b.length-a.length)[0] : null;
+  return { prefix, number, qty, raw:text };
 }
 
-//////////////////// HLASOVÉ ROZPOZNÁVANIE ////////////////////
+//////////////////// HLASOVÉ ROZPOZNÁVANIE (kontinuálne) ////////////////////
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recog=null, listening=false;
+let recog=null, listening=false, lastFinal='';
 const micBtn=document.getElementById('micBtn'),
       micLabel=document.getElementById('micLabel'),
       heard=document.getElementById('heard');
 
 if(!SR){
   document.querySelector('.actions').innerHTML =
-    '<div class="unsupported">Tento prehliadač nepodporuje hlasové zadávanie. Otvor appku v <b>Chrome na Androide</b>. Zadávať sa dá aj ručne tlačidlami.</div>';
+    '<div class="unsupported">Tento prehliadač nepodporuje hlasové zadávanie. Otvor appku v <b>Chrome na Androide</b> z <b>https://</b> adresy. Zadávať sa dá aj ručne.</div>';
 } else {
   recog = new SR();
   recog.lang='sk-SK';
   recog.interimResults=true;
   recog.maxAlternatives=3;
-  recog.continuous=false;
+  recog.continuous=true;          // <<< počúva aj cez pauzy, nezastaví sa po prvom čísle
 
   recog.onresult = (e)=>{
-    let interim='', final='';
+    let interim='', finalChunk='';
     for(let i=e.resultIndex;i<e.results.length;i++){
       const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal) final+=t; else interim+=t;
+      if(e.results[i].isFinal) finalChunk+=t+' '; else interim+=t;
     }
-    const shown = (final||interim).trim();
-    if(shown){ heard.textContent = '„'+shown+'"'; heard.classList.remove('empty'); }
-    if(final){ applyParsed(parseSpeech(final)); }
+    const shown=(lastFinal+' '+finalChunk+interim).trim();
+    if(shown){ heard.textContent='„'+shown+'"'; heard.classList.remove('empty'); }
+    if(finalChunk){
+      lastFinal=(lastFinal+' '+finalChunk).trim();
+      applyParsed(parseSpeech(lastFinal));   // parsuje celý zachytený text, nie len posledný kúsok
+    }
   };
-  recog.onend = ()=>{ setListening(false); };
+  recog.onend = ()=>{ if(listening){ try{recog.start();}catch(e){} } else setListening(false); };
   recog.onerror = (e)=>{
-    setListening(false);
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){
-      toast('Povoľ prístup k mikrofónu');
-    } else if(e.error==='no-speech'){
-      toast('Nič som nepočul, skús znova');
-    }
+      setListening(false); toast('Povoľ prístup k mikrofónu (potrebné https://)');
+    } else if(e.error==='no-speech'){ /* nechaj bežať */ }
+    else if(e.error==='aborted'){ /* manuálny stop */ }
   };
 }
 
 function setListening(on){
   listening=on;
   micBtn.classList.toggle('live',on);
-  micLabel.textContent = on ? 'Počúvam…' : 'Diktovať';
+  micLabel.textContent = on ? 'Počúvam… (klikni pre stop)' : 'Diktovať';
 }
 
 micBtn.addEventListener('click',()=>{
   if(!recog) return;
-  if(listening){ recog.stop(); return; }
-  try{
-    heard.textContent='Počúvam…'; heard.classList.remove('empty');
-    recog.start(); setListening(true);
-  }catch(e){ /* už beží */ }
+  if(listening){ listening=false; try{recog.stop();}catch(e){} setListening(false); return; }
+  // NOVÉ DIKTOVANIE: reset rozpracovaného riadku vrátane počtu na 1
+  resetStage();
+  lastFinal='';
+  heard.textContent='Počúvam…'; heard.classList.remove('empty');
+  try{ recog.start(); setListening(true); }catch(e){ /* už beží */ }
 });
 
-//////////////////// STAGING UI ////////////////////
-const codeView=document.getElementById('codeView'),
+//////////////////// STAGE LOGIKA ////////////////////
+function resetStage(){
+  stage = { prefixIdx: prefixes.indexOf('MV')>=0?prefixes.indexOf('MV'):(prefixes.length?0:-1),
+            number:'', qty:1 };
+  renderStage();
+}
+
+function applyParsed(p){
+  if(p.qty && p.qty>0 && p.qty<1000) stage.qty=p.qty;
+  if(p.prefix){
+    const idx=prefixes.indexOf(p.prefix);
+    stage.prefixIdx = idx>=0 ? idx : -1;
+    if(idx<0){ /* prefix nie je v zozname, ponúkni doplnenie */ }
+  }
+  if(p.number) stage.number=p.number;
+  renderStage(true);
+}
+
+function currentPrefix(){ return stage.prefixIdx>=0 ? prefixes[stage.prefixIdx] : ''; }
+function currentCode(){ return currentPrefix()+stage.number; }
+function stageValid(){ return stage.number.length>0; }
+
+//////////////////// STAGE UI ////////////////////
+const prefixVal=document.getElementById('prefixVal'),
+      numEdit=document.getElementById('numEdit'),
       qtyView=document.getElementById('qtyView'),
       warn=document.getElementById('warn'),
       confirmBtn=document.getElementById('confirmBtn');
 
-function applyParsed(p){
-  if(p.qty && p.qty>0 && p.qty<1000) stage.qty = p.qty;
-  if(p.code){
-    stage.code = p.code;
+function renderStage(fromVoice){
+  // prefix kotúč
+  const pre=currentPrefix();
+  prefixVal.textContent = pre || '––';
+  prefixVal.className = 'pval ' + (pre==='MV'?'MV':pre==='NY'?'NY':(pre?'':'none'));
+  if(pre && pre!=='MV' && pre!=='NY') prefixVal.style.color='var(--ink)';
+  else prefixVal.style.color='';
+  // číslo (needitujem ak má používateľ kurzor vnútri a píše)
+  if(document.activeElement!==numEdit){
+    numEdit.value=stage.number;
+    numEdit.classList.toggle('empty', stage.number.length===0);
   }
-  // validácia
-  evaluateStage(p);
-  renderStage();
-  // ak je všetko OK, jemne napovedz
-  if(stage.valid){ toast('Skontroluj a potvrď ✓'); }
-}
+  qtyView.textContent=stage.qty;
+  confirmBtn.disabled=!stageValid();
 
-function evaluateStage(p){
+  // varovania
   warn.textContent='';
-  stage.valid = false;
-  if(!stage.code){
-    if(p && p.raw) warn.textContent='Nerozpoznal som kód — skús znova alebo zadaj ručne.';
-    return;
-  }
-  const m = stage.code.match(/^([A-Z]{0,3})(\d+)$/);
-  if(!m){ warn.textContent='Kód má neobvyklý tvar.'; stage.valid=true; return; }
-  const pre = m[1];
-  if(pre!=='MV' && pre!=='NY'){
-    warn.textContent='Pozor: prefix nie je MV/NY — over, či sedí.';
-  }
-  if(!pre){
-    warn.textContent='Chýba prefix (MV/NY) — over kód.';
-  }
-  stage.valid = true;
+  if(stageValid() && !pre) warn.textContent='Chýba prefix — vyber šípkami hore/dole.';
+  if(fromVoice && stageValid() && pre) toast('Skontroluj a potvrď ✓');
 }
 
-function fmtCode(code){
-  const m = code && code.match(/^([A-Z]{0,3})(\d+)$/);
-  if(!m){ return '<span class="pre unk">'+ (code||'?') +'</span>'; }
-  const pre=m[1], num=m[2];
-  const cls = (pre==='MV'||pre==='NY')?pre:'unk';
-  const preHtml = pre ? '<span class="pre '+cls+'">'+pre+'</span>' : '';
-  return preHtml + '<span class="num">'+num+'</span>';
+// prefix kotúč: šípky a scroll/swipe
+const wheel=document.getElementById('prefixWheel');
+function cyclePrefix(dir){
+  if(prefixes.length===0){ stage.prefixIdx=-1; renderStage(); return; }
+  // poradie: -1 (žiadny) -> 0 -> 1 -> ... -> -1
+  let i = stage.prefixIdx;
+  i = i + dir;
+  if(i < -1) i = prefixes.length-1;
+  if(i >= prefixes.length) i = -1;
+  stage.prefixIdx = i;
+  renderStage();
 }
+document.getElementById('prefixUp').addEventListener('click',()=>cyclePrefix(-1));
+document.getElementById('prefixDown').addEventListener('click',()=>cyclePrefix(+1));
+wheel.addEventListener('wheel',(e)=>{ e.preventDefault(); cyclePrefix(e.deltaY>0?+1:-1); },{passive:false});
+// swipe hore/dole na kotúči
+let touchY=null;
+wheel.addEventListener('touchstart',e=>{ touchY=e.touches[0].clientY; },{passive:true});
+wheel.addEventListener('touchend',e=>{
+  if(touchY===null) return;
+  const dy=e.changedTouches[0].clientY-touchY;
+  if(Math.abs(dy)>18) cyclePrefix(dy>0?+1:-1);
+  touchY=null;
+},{passive:true});
 
-function renderStage(){
-  if(stage.code){
-    codeView.classList.remove('placeholder');
-    codeView.innerHTML = fmtCode(stage.code);
-  } else {
-    codeView.classList.add('placeholder');
-    codeView.textContent = '— —';
-  }
-  qtyView.textContent = stage.qty;
-  confirmBtn.disabled = !stage.valid;
-}
+// číslo: klik nastaví kurzor na koniec; len číslice
+numEdit.addEventListener('focus',()=>{
+  const v=numEdit.value; numEdit.value=''; numEdit.value=v;  // kurzor na koniec
+  setTimeout(()=>numEdit.setSelectionRange(numEdit.value.length,numEdit.value.length),0);
+});
+numEdit.addEventListener('input',()=>{
+  numEdit.value=numEdit.value.replace(/\D/g,'');
+  stage.number=numEdit.value;
+  numEdit.classList.toggle('empty', stage.number.length===0);
+  confirmBtn.disabled=!stageValid();
+});
 
 document.getElementById('plus').addEventListener('click',()=>{ stage.qty++; renderStage(); });
 document.getElementById('minus').addEventListener('click',()=>{ if(stage.qty>1){stage.qty--; renderStage();} });
 
 confirmBtn.addEventListener('click',commitStage);
-
 function commitStage(){
-  if(!stage.valid || !stage.code) return;
-  const existing = items.find(i=>i.code===stage.code);
-  if(existing){
-    existing.qty += stage.qty;
-    toast('Pripočítané k '+stage.code+' → '+existing.qty+' ks');
-  } else {
-    items.unshift({code:stage.code, qty:stage.qty});
-    toast('Pridané '+stage.code+' ('+stage.qty+' ks)');
-  }
+  if(!stageValid()) return;
+  if(listening){ listening=false; try{recog.stop();}catch(e){} setListening(false); }
+  const code=currentCode();
+  const existing=items.find(i=>i.code===code);
+  if(existing){ existing.qty+=stage.qty; toast('Pripočítané '+code+' → '+existing.qty+' ks'); }
+  else { items.unshift({code, qty:stage.qty}); toast('Pridané '+code+' ('+stage.qty+' ks)'); }
   save();
-  // reset stage
-  stage={code:null,qty:1,valid:false};
+  resetStage();
+  lastFinal='';
   heard.textContent='Klikni na mikrofón a diktuj…'; heard.classList.add('empty');
-  warn.textContent='';
-  renderStage();
   renderList();
 }
 
 //////////////////// ZOZNAM ////////////////////
-const listEl=document.getElementById('list'),
-      emptyState=document.getElementById('emptyState');
-
+const listEl=document.getElementById('list'), emptyState=document.getElementById('emptyState');
 function renderList(){
-  // odstráň staré riadky (okrem empty-state)
   listEl.querySelectorAll('.row').forEach(r=>r.remove());
-  if(items.length===0){
-    emptyState.style.display='';
-  } else {
+  if(items.length===0){ emptyState.style.display=''; }
+  else{
     emptyState.style.display='none';
     items.forEach((it,idx)=>{
       const row=document.createElement('div'); row.className='row';
-      row.innerHTML =
-        '<div class="rc">'+fmtCodeList(it.code)+'</div>'+
+      row.innerHTML='<div class="rc">'+fmtCodeList(it.code)+'</div>'+
         '<div class="rq">'+
           '<button class="mini" data-a="dec" data-i="'+idx+'">−</button>'+
           '<span class="qn">'+it.qty+'</span>'+
@@ -439,44 +474,72 @@ function renderList(){
   }
   updateStats();
 }
-
 function fmtCodeList(code){
-  const m = code && code.match(/^([A-Z]{0,3})(\d+)$/);
+  const m=code&&code.match(/^([A-Z]{0,4})(\d+)$/);
   if(!m) return '<span class="p unk">'+code+'</span>';
-  const pre=m[1], num=m[2];
-  const cls=(pre==='MV'||pre==='NY')?pre:'unk';
+  const pre=m[1],num=m[2];
+  const cls=(pre==='MV'||pre==='NY')?pre:(pre?'unk':'');
   return (pre?'<span class="p '+cls+'">'+pre+'</span>':'')+num;
 }
-
 listEl.addEventListener('click',(e)=>{
   const b=e.target.closest('[data-a]'); if(!b) return;
-  const i=+b.dataset.i, a=b.dataset.a;
+  const i=+b.dataset.i,a=b.dataset.a;
   if(a==='inc') items[i].qty++;
   else if(a==='dec'){ items[i].qty--; if(items[i].qty<=0) items.splice(i,1); }
   else if(a==='del') items.splice(i,1);
   save(); renderList();
 });
-
 function updateStats(){
-  const totItems=items.length;
-  const totQty=items.reduce((s,i)=>s+i.qty,0);
-  document.getElementById('totItems').textContent=totItems;
-  document.getElementById('totQty').textContent=totQty;
-  document.getElementById('hdrStat').textContent=totItems+' položiek';
+  const ti=items.length, tq=items.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('totItems').textContent=ti;
+  document.getElementById('totQty').textContent=tq;
+  document.getElementById('hdrStat').textContent=ti+' položiek';
 }
 
-//////////////////// NASTAVENIE URL ////////////////////
+//////////////////// NASTAVENIA / PREFIXY ////////////////////
 const setupModal=document.getElementById('setupModal'),
-      urlInput=document.getElementById('urlInput');
+      urlInput=document.getElementById('urlInput'),
+      prefixListEl=document.getElementById('prefixList'),
+      newPrefixInput=document.getElementById('newPrefix');
+
+function renderPrefixChips(){
+  prefixListEl.innerHTML='';
+  if(prefixes.length===0){
+    prefixListEl.innerHTML='<span style="color:var(--ink-dim);font-size:13px">Žiadne prefixy</span>';
+  }
+  prefixes.forEach((p,idx)=>{
+    const c=document.createElement('div'); c.className='pchip';
+    c.innerHTML=p+'<span class="x" data-i="'+idx+'">✕</span>';
+    prefixListEl.appendChild(c);
+  });
+}
+prefixListEl.addEventListener('click',e=>{
+  const x=e.target.closest('.x'); if(!x) return;
+  prefixes.splice(+x.dataset.i,1);
+  savePrefixes(); renderPrefixChips();
+});
+document.getElementById('addPrefixBtn').addEventListener('click',addPrefix);
+newPrefixInput.addEventListener('keydown',e=>{ if(e.key==='Enter') addPrefix(); });
+function addPrefix(){
+  let v=newPrefixInput.value.toUpperCase().replace(/[^A-Z]/g,'');
+  if(!v){ toast('Zadaj prefix (písmená)'); return; }
+  if(prefixes.includes(v)){ toast(v+' už existuje'); return; }
+  prefixes.push(v); savePrefixes(); renderPrefixChips(); newPrefixInput.value='';
+  toast('Pridaný prefix '+v);
+}
+
 document.getElementById('setupBtn').addEventListener('click',()=>{
-  urlInput.value=scriptUrl; setupModal.classList.add('show');
+  urlInput.value=scriptUrl; renderPrefixChips(); setupModal.classList.add('show');
 });
 document.getElementById('setupCancel').addEventListener('click',()=>setupModal.classList.remove('show'));
 document.getElementById('setupSave').addEventListener('click',()=>{
   scriptUrl=urlInput.value.trim();
   localStorage.setItem(LS_URL,scriptUrl);
+  // ak sa zmenili prefixy, over že stage prefix stále platí
+  if(stage.prefixIdx>=prefixes.length) stage.prefixIdx=-1;
   setupModal.classList.remove('show');
-  toast(scriptUrl?'URL uložená':'URL vymazaná');
+  renderStage();
+  toast('Uložené');
 });
 
 //////////////////// EXPORT ////////////////////
@@ -485,68 +548,48 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
   if(items.length===0){ toast('Nie je čo exportovať'); return; }
   document.getElementById('exportInfo').textContent =
     items.length+' položiek · '+items.reduce((s,i)=>s+i.qty,0)+' ks spolu. '+
-    (scriptUrl?'Odoslať priamo do Google Sheetu, alebo stiahnuť ako CSV.':'URL Sheetu nie je nastavená — stiahni CSV alebo nastav URL v ⚙.');
+    (scriptUrl?'Odoslať priamo do Google Sheetu, alebo stiahnuť CSV.':'URL Sheetu nie je nastavená — stiahni CSV alebo nastav URL v ⚙.');
   exportModal.classList.add('show');
 });
-
 function buildCsv(){
-  const rows=[['kod','pocet','cas']];
-  const now=new Date().toISOString();
+  const rows=[['kod','pocet','cas']]; const now=new Date().toISOString();
   items.forEach(i=>rows.push([i.code,i.qty,now]));
   return rows.map(r=>r.join(',')).join('\n');
 }
-
 document.getElementById('exportCsv').addEventListener('click',()=>{
   const blob=new Blob([buildCsv()],{type:'text/csv'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='inventura_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  toast('CSV stiahnuté');
+  a.click(); toast('CSV stiahnuté');
 });
-
 document.getElementById('exportSend').addEventListener('click',async ()=>{
   if(!scriptUrl){ toast('Najprv nastav URL v ⚙'); return; }
   toast('Odosielam…');
   try{
-    await fetch(scriptUrl,{
-      method:'POST',
-      mode:'no-cors',
+    await fetch(scriptUrl,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({items:items, sentAt:new Date().toISOString()})
-    });
-    // no-cors => odpoveď nevieme čítať, predpokladáme úspech
-    toast('Odoslané do Sheetu ✓');
-    exportModal.classList.remove('show');
-  }catch(e){
-    toast('Chyba pri odoslaní — skús znova');
-  }
+      body:JSON.stringify({items:items, sentAt:new Date().toISOString()})});
+    toast('Odoslané do Sheetu ✓'); exportModal.classList.remove('show');
+  }catch(e){ toast('Chyba pri odoslaní — skús znova'); }
 });
-
 document.getElementById('exportClear').addEventListener('click',()=>{
-  if(confirm('Naozaj vymazať všetkých '+items.length+' položiek? Najprv si over, že export prebehol.')){
-    items=[]; save(); renderList(); exportModal.classList.remove('show');
-    toast('Vymazané');
+  if(confirm('Naozaj vymazať všetkých '+items.length+' položiek? Over, že export prebehol.')){
+    items=[]; save(); renderList(); exportModal.classList.remove('show'); toast('Vymazané');
   }
 });
-
-// zatvor modal klikom mimo
-[setupModal,exportModal].forEach(m=>{
-  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); });
-});
+[setupModal,exportModal].forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }); });
 
 //////////////////// TOAST ////////////////////
 let toastT;
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>t.classList.remove('show'),1900);
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1900);
 }
 
 //////////////////// ŠTART ////////////////////
-renderStage();
-renderList();
+renderStage(); renderList();
 </script>
 </body>
 </html>
