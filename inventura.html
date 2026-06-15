@@ -282,7 +282,7 @@ if(!SR){
   recog.lang='sk-SK';
   recog.interimResults=true;
   recog.maxAlternatives=3;
-  recog.continuous=true;   // držíme spojenie, ale stopneme sami po tichu
+  recog.continuous=false;   // jednorazový režim — mikrofón sa po dohovorení čisto vypne (žiadne hlučné reštarty)
 
   recog.onresult=(e)=>{
     let interim='', finalChunk='';
@@ -293,10 +293,9 @@ if(!SR){
     const shown=(lastFinal+' '+finalChunk+interim).trim();
     if(shown){ heard.textContent='„'+shown+'"'; heard.classList.remove('empty'); }
     if(finalChunk){ lastFinal=(lastFinal+' '+finalChunk).trim(); applyParsed(parseSpeech(lastFinal)); }
-    // časovač ticha reštartuj LEN keď už nejaký zvuk prišiel (nie hneď po štarte)
-    if(shown){ armSilenceStop(); }
   };
-  recog.onend=()=>{ if(listening){ try{recog.start();}catch(e){} } else finishListening(); };
+  // mikrofón sa zapne raz a po dohovorení skončí — bez auto-reštartu, takže žiadne opakované pípanie
+  recog.onend=()=>{ listening=false; finishListening(); };
   recog.onerror=(e)=>{
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){
       listening=false; finishListening(); toast('Povoľ prístup k mikrofónu (potrebné https://)');
@@ -304,11 +303,6 @@ if(!SR){
   };
 }
 
-// po ~3 s ticha (po tom, ako dohovoríš) automaticky zastav
-function armSilenceStop(){
-  if(silenceTimer) clearTimeout(silenceTimer);
-  silenceTimer=setTimeout(()=>{ stopListening(); }, 3000);
-}
 function stopListening(){
   if(!listening) return;
   listening=false;
