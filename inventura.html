@@ -445,6 +445,13 @@ numEdit.addEventListener('input',()=>{
   numEdit.classList.toggle('empty', stage.number.length===0);
   confirmBtn.disabled=!stageValid();
 });
+// Enter na klávesnici uloží položku (rovnako ako tlačidlo ✓)
+numEdit.addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    if(stageValid()){ numEdit.blur(); commitStage(); }
+  }
+});
 document.getElementById('plus').addEventListener('click',()=>{ stage.qty++; qtyView.textContent=stage.qty; });
 document.getElementById('minus').addEventListener('click',()=>{ if(stage.qty>1){stage.qty--; qtyView.textContent=stage.qty;} });
 
@@ -538,6 +545,7 @@ function renderList(){
     else if(pendQ<0) badge=' <span class="expmark minus">'+pendQ+' na export</span>';
     else if((it.sentQty||0)>0) badge=' <span class="expmark">✓ v Sheete</span>';
     const row=document.createElement('div'); row.className='row'+(synced && (it.sentQty||0)>0?' synced':'');
+    row.dataset.row=idx;
     row.innerHTML=
       '<div class="rcwrap">'+
         '<div class="rc">'+fmtCodeList(it.code)+badge+'</div>'+
@@ -552,6 +560,22 @@ function renderList(){
       '</div>';
     listEl.appendChild(row);
   });
+  updateStats();
+}
+// aktualizuje JEDEN riadok na mieste (bez prekreslenia celého zoznamu => nestratí sa rolovanie)
+function updateRow(idx){
+  const it=items[idx];
+  const row=listEl.querySelector('.row[data-row="'+idx+'"]');
+  if(!it || !row){ renderList(); return; }
+  const pendQ=(it.qty-(it.sentQty||0));
+  const synced=pendQ===0;
+  let badge='';
+  if(pendQ>0) badge=' <span class="expmark">+'+pendQ+' na export</span>';
+  else if(pendQ<0) badge=' <span class="expmark minus">'+pendQ+' na export</span>';
+  else if((it.sentQty||0)>0) badge=' <span class="expmark">✓ v Sheete</span>';
+  row.classList.toggle('synced', synced && (it.sentQty||0)>0);
+  const rc=row.querySelector('.rc'); if(rc) rc.innerHTML=fmtCodeList(it.code)+badge;
+  const qn=row.querySelector('.qn'); if(qn) qn.textContent=it.qty;
   updateStats();
 }
 function buildRowEditor(it,idx){
@@ -578,6 +602,7 @@ function buildRowEditor(it,idx){
   const nrow=document.createElement('div'); nrow.className='reNum';
   const ni=document.createElement('input'); ni.inputMode='numeric'; ni.value=editBuf.number;
   ni.addEventListener('input',()=>{ ni.value=ni.value.replace(/\D/g,''); editBuf.number=ni.value; });
+  ni.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); ni.blur(); ok.click(); } });
   const nlbl=document.createElement('span'); nlbl.style.cssText='font-size:12px;color:var(--ink-dim)'; nlbl.textContent='číslo kódu';
   nrow.appendChild(ni); nrow.appendChild(nlbl);
   wrap.appendChild(nrow);
@@ -609,8 +634,12 @@ function fmtCodeList(code){
 listEl.addEventListener('click',(e)=>{
   const b=e.target.closest('[data-a]'); if(!b) return;
   const i=+b.dataset.i,a=b.dataset.a;
-  if(a==='inc'){ items[i].qty++; save(); renderList(); }
-  else if(a==='dec'){ items[i].qty--; if(items[i].qty<=0) items.splice(i,1); save(); renderList(); }
+  if(a==='inc'){ items[i].qty++; save(); updateRow(i); }
+  else if(a==='dec'){
+    items[i].qty--;
+    if(items[i].qty<=0){ items.splice(i,1); save(); renderList(); }   // zmizne riadok => prekresli
+    else { save(); updateRow(i); }
+  }
   else if(a==='del'){ items.splice(i,1); save(); renderList(); }
   else if(a==='edit'){ editingIdx=(editingIdx===i?-1:i); renderList(); }
 });
@@ -734,20 +763,28 @@ document.getElementById('confirmBack').addEventListener('click',()=>{
   pendingPayload=null;
 });
 
+let sending=false;
 document.getElementById('confirmOk').addEventListener('click',async ()=>{
-  if(!pendingPayload){ return; }
+  if(!pendingPayload || sending){ return; }   // zámok: ignoruj ďalšie kliknutia počas odosielania
+  sending=true;
+  const okBtn=document.getElementById('confirmOk'), backBtn=document.getElementById('confirmBack');
+  okBtn.disabled=true; backBtn.disabled=true; okBtn.textContent='Odosielam…';
   const {pend, items:payload}=pendingPayload;
-  toast('Odosielam '+pend.length+'…');
   try{
     await fetch(scriptUrl,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({items:payload, sentAt:new Date().toISOString()})});
     pend.forEach(i=>{ i.sentQty=i.qty; });
     save(); renderList();
-    toast('Odoslané do Sheetu ✓ ('+pend.length+')');
     document.getElementById('confirmModal').classList.remove('show');
+    toast('Odoslané do Sheetu ✓ ('+pend.length+')');
     pendingPayload=null;
-  }catch(e){ toast('Chyba pri odoslaní — skús znova'); }
+  }catch(e){
+    toast('Chyba pri odoslaní — skús znova');
+  }finally{
+    sending=false;
+    okBtn.disabled=false; backBtn.disabled=false; okBtn.textContent='OK, odoslať';
+  }
 });
 document.getElementById('exportClear').addEventListener('click',()=>{
   // zmaže len položky, ktoré sú celé odoslané (žiadny prírastok čaká)
