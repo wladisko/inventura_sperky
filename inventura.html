@@ -95,6 +95,7 @@
   .row.synced{opacity:.5}
   .row.synced .rc{text-decoration:none}
   .row .expmark{flex:0 0 auto;color:var(--ok);font-size:13px;font-weight:700}
+  .row .expmark.minus{color:var(--bad)}
   .row .rcwrap{display:flex;flex-direction:column;gap:2px;min-width:0}
   .row .rc{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.02em}
   .row .rc .p.MV{color:var(--mv)} .row .rc .p.NY{color:var(--ny)} .row .rc .p.unk{color:var(--ink-dim)}
@@ -254,6 +255,18 @@
     </div>
     <div class="sheet-actions" style="margin-top:10px">
       <button class="btn" id="exportClear" style="flex:1;color:var(--bad)">Vymazať odoslané zo zoznamu</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="sheet">
+    <h2>Potvrď odoslanie</h2>
+    <div id="confirmSummary" style="font-size:14px;line-height:1.7;margin-bottom:4px"></div>
+    <p style="margin-top:10px;font-size:12px">Do Sheetu sa pošlú len tieto prírastky. Skontroluj a potvrď.</p>
+    <div class="sheet-actions">
+      <button class="btn" id="confirmBack">Späť</button>
+      <button class="btn primary" id="confirmOk">OK, odoslať</button>
     </div>
   </div>
 </div>
@@ -519,10 +532,11 @@ function renderList(){
   items.forEach((it,idx)=>{
     if(idx===editingIdx){ listEl.appendChild(buildRowEditor(it,idx)); return; }
     const pendQ=(it.qty-(it.sentQty||0));
-    const synced=pendQ<=0;
+    const synced=pendQ===0;
     let badge='';
-    if((it.sentQty||0)>0 && pendQ>0) badge=' <span class="expmark">+'+pendQ+' na export</span>';
-    else if(synced && (it.sentQty||0)>0) badge=' <span class="expmark">✓ v Sheete</span>';
+    if(pendQ>0) badge=' <span class="expmark">+'+pendQ+' na export</span>';
+    else if(pendQ<0) badge=' <span class="expmark minus">'+pendQ+' na export</span>';
+    else if((it.sentQty||0)>0) badge=' <span class="expmark">✓ v Sheete</span>';
     const row=document.createElement('div'); row.className='row'+(synced && (it.sentQty||0)>0?' synced':'');
     row.innerHTML=
       '<div class="rcwrap">'+
@@ -685,21 +699,54 @@ document.getElementById('exportCsv').addEventListener('click',()=>{
   a.download='inventura_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click(); toast('CSV stiahnuté (aktuálny stav)');
 });
-document.getElementById('exportSend').addEventListener('click',async ()=>{
+let pendingPayload=null;   // čo sa pošle po potvrdení
+document.getElementById('exportSend').addEventListener('click',()=>{
   if(!scriptUrl){ toast('Najprv nastav URL v ⚙'); return; }
   const pend=itemsWithDelta();
   if(pend.length===0){ toast('Nič nové — všetko je odoslané'); return; }
-  // pošli len PRÍRASTKY (kód, umiestnenie, rozdiel)
-  const payload=pend.map(i=>({ code:i.code, loc:i.loc||'', qty:pendingDelta(i) }));
+
+  const plus=pend.filter(i=>pendingDelta(i)>0);
+  const minus=pend.filter(i=>pendingDelta(i)<0);
+  const plusQty=plus.reduce((s,i)=>s+pendingDelta(i),0);
+  const minusQty=minus.reduce((s,i)=>s+pendingDelta(i),0);
+
+  let html='';
+  html+='<div><b>'+plus.length+'</b> '+(plus.length===1?'položka':'položiek')+
+        ' s prírastkom <b style="color:var(--ok)">+'+plusQty+' ks</b></div>';
+  if(minus.length>0){
+    html+='<div style="color:var(--bad)"><b>'+minus.length+'</b> '+(minus.length===1?'položka':'položiek')+
+          ' so znížením <b>'+minusQty+' ks</b></div>';
+  } else {
+    html+='<div style="color:var(--ink-dim)">Žiadne zníženia</div>';
+  }
+  document.getElementById('confirmSummary').innerHTML=html;
+
+  // priprav payload (kód, umiestnenie, rozdiel)
+  pendingPayload={ pend, items: pend.map(i=>({ code:i.code, loc:i.loc||'', qty:pendingDelta(i) })) };
+
+  exportModal.classList.remove('show');
+  document.getElementById('confirmModal').classList.add('show');
+});
+
+document.getElementById('confirmBack').addEventListener('click',()=>{
+  document.getElementById('confirmModal').classList.remove('show');
+  exportModal.classList.add('show');
+  pendingPayload=null;
+});
+
+document.getElementById('confirmOk').addEventListener('click',async ()=>{
+  if(!pendingPayload){ return; }
+  const {pend, items:payload}=pendingPayload;
   toast('Odosielam '+pend.length+'…');
   try{
     await fetch(scriptUrl,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({items:payload, sentAt:new Date().toISOString()})});
-    // no-cors => odpoveď nečítame; po odoslaní zapamätáme, že sme poslali po aktuálny počet
     pend.forEach(i=>{ i.sentQty=i.qty; });
     save(); renderList();
-    toast('Odoslané do Sheetu ✓ ('+pend.length+')'); exportModal.classList.remove('show');
+    toast('Odoslané do Sheetu ✓ ('+pend.length+')');
+    document.getElementById('confirmModal').classList.remove('show');
+    pendingPayload=null;
   }catch(e){ toast('Chyba pri odoslaní — skús znova'); }
 });
 document.getElementById('exportClear').addEventListener('click',()=>{
@@ -712,7 +759,7 @@ document.getElementById('exportClear').addEventListener('click',()=>{
     toast('Vymazané ('+done+')');
   }
 });
-[setupModal,exportModal].forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }); });
+[setupModal,exportModal,document.getElementById('confirmModal')].forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }); });
 
 //////////////////// TOAST ////////////////////
 let toastT;
