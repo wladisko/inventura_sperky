@@ -22,14 +22,33 @@
   header h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.01em}
   header .sub{font-size:12px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
 
-  .live{padding:16px;border-bottom:1px solid var(--line);background:var(--surface)}
+  .live{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+
+  /* umiestnenie / krabica */
+  .locRow{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+  .locSelectWrap{flex:1;position:relative}
+  .locSelect{width:100%;appearance:none;background:var(--surface-2);border:1px solid var(--line);
+    color:var(--ink);border-radius:11px;padding:12px 36px 12px 12px;font-size:14px;font-weight:600;
+    outline:none}
+  .locSelect:focus{border-color:var(--mic)}
+  .locSelectWrap::after{content:'▾';position:absolute;right:13px;top:50%;transform:translateY(-50%);
+    color:var(--ink-dim);pointer-events:none;font-size:13px}
+  .locRefresh{flex:0 0 44px;height:44px;border-radius:11px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink-dim);font-size:18px;display:flex;align-items:center;justify-content:center}
+  .locRefresh:active{color:var(--ink)}
+  .locRefresh.spin{animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .locCustom{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+    border-radius:11px;padding:12px;font-size:14px;font-weight:600;outline:none;margin-bottom:0;display:none}
+  .locCustom:focus{border-color:var(--mic)}
+  .locCustom.show{display:block}
+  .locHint{font-size:11px;color:var(--ink-dim);margin-bottom:14px;min-height:14px}
+
   .heard{min-height:20px;font-size:13px;color:var(--ink-dim);font-style:italic;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:14px}
   .heard.empty{opacity:.5}
 
   .fieldLabel{font-size:11px;color:var(--ink-dim);margin-bottom:6px}
-
-  /* prefix tlačidlá v rade */
   .prefixRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
   .pfx{flex:1 1 0;min-width:64px;height:54px;border-radius:12px;border:1px solid var(--line);
     background:var(--surface-2);color:var(--ink);font-family:var(--mono);font-size:22px;
@@ -40,7 +59,6 @@
   .pfx[data-c="NY"]{color:var(--ny)} .pfx[data-c="NY"].sel{border-color:var(--ny)}
   .pfx.sel:not([data-c="MV"]):not([data-c="NY"]){border-color:var(--ink)}
 
-  /* číslo + počet */
   .numRow{display:flex;align-items:center;gap:14px;margin-bottom:4px}
   .codeWrap{display:flex;align-items:baseline;gap:2px;flex:1}
   .prefixEcho{font-family:var(--mono);font-size:36px;font-weight:700}
@@ -73,20 +91,36 @@
   .confirm:disabled{opacity:.3}
 
   .list{flex:1;overflow-y:auto;padding:8px 12px 120px}
-  .row{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid var(--line)}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line)}
+  .row .rcwrap{display:flex;flex-direction:column;gap:2px;min-width:0}
   .row .rc{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.02em}
   .row .rc .p.MV{color:var(--mv)} .row .rc .p.NY{color:var(--ny)} .row .rc .p.unk{color:var(--ink-dim)}
-  .row .rq{margin-left:auto;display:flex;align-items:center;gap:6px}
-  .row .rq .qn{font-family:var(--mono);font-size:20px;font-weight:700;min-width:34px;
+  .row .rloc{font-size:11px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .row .edit{flex:0 0 32px;height:32px;border-radius:8px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink-dim);font-size:14px;display:flex;align-items:center;justify-content:center}
+  .row .edit:active{color:var(--ink)}
+  .row .rq{margin-left:auto;display:flex;align-items:center;gap:5px}
+  .row .rq .qn{font-family:var(--mono);font-size:20px;font-weight:700;min-width:30px;
     text-align:center;font-variant-numeric:tabular-nums}
-  .mini{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
-    background:var(--surface-2);color:var(--ink);font-size:19px;font-weight:600;
+  .mini{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink);font-size:18px;font-weight:600;
     display:flex;align-items:center;justify-content:center}
   .mini:active{background:var(--line)}
-  .del{width:34px;height:34px;border-radius:9px;border:1px solid transparent;background:transparent;
-    color:var(--ink-dim);font-size:17px;margin-left:4px}
+  .del{width:32px;height:32px;border-radius:9px;border:1px solid transparent;background:transparent;
+    color:var(--ink-dim);font-size:16px}
   .del:active{color:var(--bad)}
   .empty-state{text-align:center;color:var(--ink-dim);padding:48px 24px;font-size:14px;line-height:1.6}
+
+  /* inline editor riadku */
+  .rowEdit{display:flex;flex-direction:column;gap:10px;padding:14px 12px;
+    border-bottom:1px solid var(--line);background:var(--surface)}
+  .rowEdit .prefixRow{margin-bottom:0}
+  .rowEdit .reNum{display:flex;align-items:center;gap:10px}
+  .rowEdit .reNum input{font-family:var(--mono);font-size:26px;font-weight:700;background:var(--bg);
+    border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:6px 10px;width:8ch;outline:none}
+  .rowEdit .reNum input:focus{border-color:var(--mic)}
+  .rowEdit .reActions{display:flex;gap:8px}
+  .rowEdit .reActions .btn{flex:1;justify-content:center;text-align:center}
 
   .foot{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
     padding:12px 16px;display:flex;gap:10px;align-items:center;
@@ -136,6 +170,16 @@
 </header>
 
 <div class="live">
+  <div class="fieldLabel">Umiestnenie — krabica</div>
+  <div class="locRow">
+    <div class="locSelectWrap">
+      <select class="locSelect" id="locSelect"></select>
+    </div>
+    <button class="locRefresh" id="locRefresh" title="Obnoviť zoznam">↻</button>
+  </div>
+  <input class="locCustom" id="locCustom" placeholder="Napíš názov krabice…" autocomplete="off">
+  <div class="locHint" id="locHint"></div>
+
   <div class="heard empty" id="heard">Klikni na mikrofón a diktuj…</div>
 
   <div class="fieldLabel">Prefix — ťukni na správny</div>
@@ -167,8 +211,8 @@
 <div class="list" id="list">
   <div class="empty-state" id="emptyState">
     Zatiaľ nič nenaskenované.<br>
-    Klikni <b>Diktovať</b> a povedz napr.<br>
-    <b>„em vé 4770"</b>
+    Vyber krabicu, klikni <b>Diktovať</b><br>
+    a povedz napr. <b>„em vé 4770"</b>
   </div>
 </div>
 
@@ -189,6 +233,7 @@
     </div>
     <label style="margin-top:20px">Adresa Google Sheetu (Apps Script Web App URL)</label>
     <input type="url" id="urlInput" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <p style="margin-top:8px;font-size:12px">Krabice (umiestnenia) si píš v Google Sheete na hárku <b>Sheet2</b>, do prvého stĺpca. Appka ich načíta do menu.</p>
     <div class="sheet-actions">
       <button class="btn" id="setupCancel">Zavrieť</button>
       <button class="btn primary" id="setupSave">Uložiť</button>
@@ -214,17 +259,24 @@
 
 <script>
 //////////////////// ÚLOŽISKO ////////////////////
-const LS_ITEMS='inv_items_v1', LS_URL='inv_url_v1', LS_PREF='inv_prefixes_v1';
+const LS_ITEMS='inv_items_v2', LS_URL='inv_url_v1', LS_PREF='inv_prefixes_v1',
+      LS_LASTPFX='inv_lastprefix_v1', LS_BOXES='inv_boxes_v1', LS_LASTLOC='inv_lastloc_v1';
 let items = load(LS_ITEMS) || [];
 let scriptUrl = localStorage.getItem(LS_URL) || '';
 let prefixes = load(LS_PREF) || ['MV','NY'];
+let lastPrefix = localStorage.getItem(LS_LASTPFX) || (prefixes.includes('MV')?'MV':(prefixes[0]||''));
+let boxes = load(LS_BOXES) || [];                 // názvy krabíc zo Sheet2
+let lastLoc = localStorage.getItem(LS_LASTLOC) || '';
+const CUSTOM_OPT='__custom__';
 
 function load(k){ try{return JSON.parse(localStorage.getItem(k))}catch(e){return null} }
 function save(){ localStorage.setItem(LS_ITEMS, JSON.stringify(items)); }
 function savePrefixes(){ localStorage.setItem(LS_PREF, JSON.stringify(prefixes)); }
+function saveBoxes(){ localStorage.setItem(LS_BOXES, JSON.stringify(boxes)); }
 
 //////////////////// STAGE ////////////////////
-let stage = { prefix: prefixes.includes('MV')?'MV':(prefixes[0]||''), number:'', qty:1 };
+let stage = { prefix: lastPrefix||'', number:'', qty:1 };
+let currentLoc = lastLoc;   // aktuálne zvolené umiestnenie (string)
 
 //////////////////// MAPOVANIE REČI ////////////////////
 const WORDNUM = {
@@ -267,9 +319,9 @@ function parseSpeech(text){
   return { prefix, number, qty };
 }
 
-//////////////////// HLAS (auto-stop) ////////////////////
+//////////////////// HLAS (jednorazový, tichý) ////////////////////
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recog=null, listening=false, lastFinal='', silenceTimer=null;
+let recog=null, listening=false, lastFinal='';
 const micBtn=document.getElementById('micBtn'),
       micLabel=document.getElementById('micLabel'),
       heard=document.getElementById('heard');
@@ -279,11 +331,7 @@ if(!SR){
     '<div class="unsupported">Tento prehliadač nepodporuje hlasové zadávanie. Otvor appku v <b>Chrome na Androide</b> z <b>https://</b> adresy. Zadávať sa dá aj ručne.</div>';
 } else {
   recog=new SR();
-  recog.lang='sk-SK';
-  recog.interimResults=true;
-  recog.maxAlternatives=3;
-  recog.continuous=false;   // jednorazový režim — mikrofón sa po dohovorení čisto vypne (žiadne hlučné reštarty)
-
+  recog.lang='sk-SK'; recog.interimResults=true; recog.maxAlternatives=3; recog.continuous=false;
   recog.onresult=(e)=>{
     let interim='', finalChunk='';
     for(let i=e.resultIndex;i<e.results.length;i++){
@@ -294,7 +342,6 @@ if(!SR){
     if(shown){ heard.textContent='„'+shown+'"'; heard.classList.remove('empty'); }
     if(finalChunk){ lastFinal=(lastFinal+' '+finalChunk).trim(); applyParsed(parseSpeech(lastFinal)); }
   };
-  // mikrofón sa zapne raz a po dohovorení skončí — bez auto-reštartu, takže žiadne opakované pípanie
   recog.onend=()=>{ listening=false; finishListening(); };
   recog.onerror=(e)=>{
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){
@@ -302,39 +349,29 @@ if(!SR){
     }
   };
 }
-
-function stopListening(){
-  if(!listening) return;
-  listening=false;
-  if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; }
-  try{ recog.stop(); }catch(e){}
-}
 function finishListening(){
   micBtn.classList.remove('live'); micLabel.textContent='Diktovať';
   if(stageValid()){ heard.textContent='Zachytené — skontroluj a potvrď ✓'; }
 }
-
 micBtn.addEventListener('click',()=>{
   if(!recog) return;
-  if(listening){ stopListening(); return; }
-  resetStage();          // nové diktovanie => počet späť na 1
+  if(listening){ try{recog.stop();}catch(e){} return; }
+  resetStage();
   lastFinal='';
   heard.textContent='Počúvam…'; heard.classList.remove('empty');
   micBtn.classList.add('live'); micLabel.textContent='Počúvam…';
   listening=true;
   try{ recog.start(); }catch(e){}
-  // časovač ticha sa NEspúšťa tu — naštartuje sa až keď príde prvý zvuk,
-  // takže máš čas začať hovoriť aj po dlhšom rozmýšľaní
 });
 
 //////////////////// STAGE LOGIKA ////////////////////
 function resetStage(){
-  stage={ prefix: prefixes.includes('MV')?'MV':(prefixes[0]||''), number:'', qty:1 };
+  stage={ prefix: lastPrefix||'', number:'', qty:1 };
   renderStage();
 }
 function applyParsed(p){
   if(p.qty && p.qty>0 && p.qty<1000) stage.qty=p.qty;
-  if(p.prefix) stage.prefix=p.prefix;
+  if(p.prefix){ stage.prefix=p.prefix; lastPrefix=p.prefix; localStorage.setItem(LS_LASTPFX,lastPrefix); }
   if(p.number) stage.number=p.number;
   renderStage(true);
 }
@@ -357,7 +394,6 @@ function renderPrefixButtons(){
     b.dataset.c=p; b.dataset.p=p; b.textContent=p;
     prefixRow.appendChild(b);
   });
-  // tlačidlo "žiadny prefix"
   const none=document.createElement('button');
   none.className='pfx none'+(stage.prefix===''?' sel':'');
   none.dataset.p=''; none.textContent='––';
@@ -366,9 +402,9 @@ function renderPrefixButtons(){
 prefixRow.addEventListener('click',e=>{
   const b=e.target.closest('.pfx'); if(!b) return;
   stage.prefix=b.dataset.p;
+  lastPrefix=stage.prefix; localStorage.setItem(LS_LASTPFX,lastPrefix);
   renderStage();
 });
-
 function renderStage(fromVoice){
   renderPrefixButtons();
   const pre=stage.prefix||'';
@@ -384,7 +420,6 @@ function renderStage(fromVoice){
   if(stageValid() && !pre) warn.textContent='Bez prefixu — ak treba, ťukni MV/NY hore.';
   if(fromVoice && stageValid() && pre) toast('Skontroluj a potvrď ✓');
 }
-
 numEdit.addEventListener('focus',()=>{
   const v=numEdit.value; setTimeout(()=>numEdit.setSelectionRange(v.length,v.length),0);
 });
@@ -394,58 +429,164 @@ numEdit.addEventListener('input',()=>{
   numEdit.classList.toggle('empty', stage.number.length===0);
   confirmBtn.disabled=!stageValid();
 });
-
 document.getElementById('plus').addEventListener('click',()=>{ stage.qty++; qtyView.textContent=stage.qty; });
 document.getElementById('minus').addEventListener('click',()=>{ if(stage.qty>1){stage.qty--; qtyView.textContent=stage.qty;} });
 
 confirmBtn.addEventListener('click',commitStage);
 function commitStage(){
   if(!stageValid()) return;
-  stopListening();
+  if(listening){ try{recog.stop();}catch(e){} }
   const code=currentCode();
-  const ex=items.find(i=>i.code===code);
+  // pripočítaj len ak rovnaký kód v rovnakej krabici
+  const ex=items.find(i=>i.code===code && i.loc===currentLoc);
   if(ex){ ex.qty+=stage.qty; toast('Pripočítané '+code+' → '+ex.qty+' ks'); }
-  else { items.unshift({code,qty:stage.qty}); toast('Pridané '+code+' ('+stage.qty+' ks)'); }
+  else { items.unshift({code, qty:stage.qty, loc:currentLoc}); toast('Pridané '+code+' ('+stage.qty+' ks)'); }
   save();
   resetStage(); lastFinal='';
   heard.textContent='Klikni na mikrofón a diktuj…'; heard.classList.add('empty');
   renderList();
 }
 
-//////////////////// ZOZNAM ////////////////////
-const listEl=document.getElementById('list'), emptyState=document.getElementById('emptyState');
-function renderList(){
-  listEl.querySelectorAll('.row').forEach(r=>r.remove());
-  if(items.length===0) emptyState.style.display='';
-  else{
-    emptyState.style.display='none';
-    items.forEach((it,idx)=>{
-      const row=document.createElement('div'); row.className='row';
-      row.innerHTML='<div class="rc">'+fmtCodeList(it.code)+'</div>'+
-        '<div class="rq">'+
-          '<button class="mini" data-a="dec" data-i="'+idx+'">−</button>'+
-          '<span class="qn">'+it.qty+'</span>'+
-          '<button class="mini" data-a="inc" data-i="'+idx+'">+</button>'+
-          '<button class="del" data-a="del" data-i="'+idx+'">✕</button>'+
-        '</div>';
-      listEl.appendChild(row);
-    });
+//////////////////// UMIESTNENIE / KRABICE ////////////////////
+const locSelect=document.getElementById('locSelect'),
+      locCustom=document.getElementById('locCustom'),
+      locHint=document.getElementById('locHint'),
+      locRefresh=document.getElementById('locRefresh');
+
+function renderLocOptions(){
+  locSelect.innerHTML='';
+  // prázdna voľba
+  const empty=document.createElement('option'); empty.value=''; empty.textContent='— bez umiestnenia —';
+  locSelect.appendChild(empty);
+  boxes.forEach(b=>{
+    const o=document.createElement('option'); o.value=b; o.textContent=b; locSelect.appendChild(o);
+  });
+  const cust=document.createElement('option'); cust.value=CUSTOM_OPT; cust.textContent='✎ Napísať vlastné…';
+  locSelect.appendChild(cust);
+
+  // nastav aktuálnu hodnotu
+  if(currentLoc && !boxes.includes(currentLoc)){
+    // vlastné, nie je v zozname -> custom pole
+    locSelect.value=CUSTOM_OPT; locCustom.classList.add('show'); locCustom.value=currentLoc;
+  } else {
+    locSelect.value=currentLoc||''; locCustom.classList.remove('show');
   }
+}
+locSelect.addEventListener('change',()=>{
+  if(locSelect.value===CUSTOM_OPT){
+    locCustom.classList.add('show'); locCustom.value=''; locCustom.focus(); currentLoc='';
+  } else {
+    locCustom.classList.remove('show');
+    currentLoc=locSelect.value;
+    lastLoc=currentLoc; localStorage.setItem(LS_LASTLOC,lastLoc);
+  }
+});
+locCustom.addEventListener('input',()=>{
+  currentLoc=locCustom.value.trim();
+  lastLoc=currentLoc; localStorage.setItem(LS_LASTLOC,lastLoc);
+});
+
+async function fetchBoxes(manual){
+  if(!scriptUrl){ if(manual) toast('Najprv nastav URL Sheetu v ⚙'); return; }
+  locRefresh.classList.add('spin');
+  try{
+    const res=await fetch(scriptUrl+'?action=boxes', {method:'GET'});
+    const data=await res.json();
+    if(Array.isArray(data.boxes)){
+      boxes=data.boxes.filter(x=>x && String(x).trim()).map(x=>String(x).trim());
+      saveBoxes(); renderLocOptions();
+      if(manual) toast('Krabice načítané ('+boxes.length+')');
+    }
+  }catch(e){
+    if(manual) toast('Nepodarilo sa načítať — skús neskôr');
+  }finally{
+    locRefresh.classList.remove('spin');
+  }
+}
+locRefresh.addEventListener('click',()=>fetchBoxes(true));
+
+//////////////////// ZOZNAM + INLINE EDIT ////////////////////
+const listEl=document.getElementById('list'), emptyState=document.getElementById('emptyState');
+let editingIdx=-1, editBuf=null;
+
+function renderList(){
+  listEl.querySelectorAll('.row,.rowEdit').forEach(r=>r.remove());
+  if(items.length===0){ emptyState.style.display=''; updateStats(); return; }
+  emptyState.style.display='none';
+  items.forEach((it,idx)=>{
+    if(idx===editingIdx){ listEl.appendChild(buildRowEditor(it,idx)); return; }
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML=
+      '<div class="rcwrap">'+
+        '<div class="rc">'+fmtCodeList(it.code)+'</div>'+
+        (it.loc?'<div class="rloc">📦 '+escapeHtml(it.loc)+'</div>':'')+
+      '</div>'+
+      '<button class="edit" data-a="edit" data-i="'+idx+'">✎</button>'+
+      '<div class="rq">'+
+        '<button class="mini" data-a="dec" data-i="'+idx+'">−</button>'+
+        '<span class="qn">'+it.qty+'</span>'+
+        '<button class="mini" data-a="inc" data-i="'+idx+'">+</button>'+
+        '<button class="del" data-a="del" data-i="'+idx+'">✕</button>'+
+      '</div>';
+    listEl.appendChild(row);
+  });
   updateStats();
 }
+function buildRowEditor(it,idx){
+  // rozlož kód na prefix+číslo
+  const m=it.code.match(/^([A-Z]{0,4})(\d+)$/);
+  editBuf={ prefix: m?m[1]:'', number: m?m[2]:it.code.replace(/\D/g,''), qty: it.qty, loc: it.loc||'' };
+  const wrap=document.createElement('div'); wrap.className='rowEdit';
+  // prefix riadok
+  const pr=document.createElement('div'); pr.className='prefixRow';
+  function paint(){
+    pr.querySelectorAll('.pfx').forEach(b=>b.classList.toggle('sel', b.dataset.p===editBuf.prefix));
+  }
+  prefixes.forEach(p=>{
+    const b=document.createElement('button'); b.className='pfx'; b.dataset.c=p; b.dataset.p=p; b.textContent=p;
+    b.addEventListener('click',()=>{ editBuf.prefix=p; paint(); });
+    pr.appendChild(b);
+  });
+  const none=document.createElement('button'); none.className='pfx none'; none.dataset.p=''; none.textContent='––';
+  none.addEventListener('click',()=>{ editBuf.prefix=''; paint(); });
+  pr.appendChild(none);
+  wrap.appendChild(pr);
+  setTimeout(paint,0);
+  // číslo
+  const nrow=document.createElement('div'); nrow.className='reNum';
+  const ni=document.createElement('input'); ni.inputMode='numeric'; ni.value=editBuf.number;
+  ni.addEventListener('input',()=>{ ni.value=ni.value.replace(/\D/g,''); editBuf.number=ni.value; });
+  const nlbl=document.createElement('span'); nlbl.style.cssText='font-size:12px;color:var(--ink-dim)'; nlbl.textContent='číslo kódu';
+  nrow.appendChild(ni); nrow.appendChild(nlbl);
+  wrap.appendChild(nrow);
+  // akcie
+  const act=document.createElement('div'); act.className='reActions';
+  const cancel=document.createElement('button'); cancel.className='btn'; cancel.textContent='Zrušiť';
+  cancel.addEventListener('click',()=>{ editingIdx=-1; renderList(); });
+  const ok=document.createElement('button'); ok.className='btn primary'; ok.textContent='Uložiť';
+  ok.addEventListener('click',()=>{
+    if(!editBuf.number){ toast('Číslo nemôže byť prázdne'); return; }
+    items[idx].code=(editBuf.prefix||'')+editBuf.number;
+    editingIdx=-1; save(); renderList(); toast('Kód upravený');
+  });
+  act.appendChild(cancel); act.appendChild(ok);
+  wrap.appendChild(act);
+  return wrap;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmtCodeList(code){
   const m=code&&code.match(/^([A-Z]{0,4})(\d+)$/);
-  if(!m) return '<span class="p unk">'+code+'</span>';
+  if(!m) return '<span class="p unk">'+escapeHtml(code)+'</span>';
   const pre=m[1],num=m[2], cls=(pre==='MV'||pre==='NY')?pre:(pre?'unk':'');
   return (pre?'<span class="p '+cls+'">'+pre+'</span>':'')+num;
 }
 listEl.addEventListener('click',(e)=>{
   const b=e.target.closest('[data-a]'); if(!b) return;
   const i=+b.dataset.i,a=b.dataset.a;
-  if(a==='inc') items[i].qty++;
-  else if(a==='dec'){ items[i].qty--; if(items[i].qty<=0) items.splice(i,1); }
-  else if(a==='del') items.splice(i,1);
-  save(); renderList();
+  if(a==='inc'){ items[i].qty++; save(); renderList(); }
+  else if(a==='dec'){ items[i].qty--; if(items[i].qty<=0) items.splice(i,1); save(); renderList(); }
+  else if(a==='del'){ items.splice(i,1); save(); renderList(); }
+  else if(a==='edit'){ editingIdx=(editingIdx===i?-1:i); renderList(); }
 });
 function updateStats(){
   const ti=items.length, tq=items.reduce((s,i)=>s+i.qty,0);
@@ -486,10 +627,13 @@ document.getElementById('setupBtn').addEventListener('click',()=>{
 });
 document.getElementById('setupCancel').addEventListener('click',()=>setupModal.classList.remove('show'));
 document.getElementById('setupSave').addEventListener('click',()=>{
+  const oldUrl=scriptUrl;
   scriptUrl=urlInput.value.trim();
   localStorage.setItem(LS_URL,scriptUrl);
-  if(!prefixes.includes(stage.prefix)) stage.prefix = prefixes.includes('MV')?'MV':(prefixes[0]||'');
-  setupModal.classList.remove('show'); renderStage(); toast('Uložené');
+  if(!prefixes.includes(stage.prefix)){ stage.prefix=prefixes.includes('MV')?'MV':(prefixes[0]||''); lastPrefix=stage.prefix; localStorage.setItem(LS_LASTPFX,lastPrefix); }
+  setupModal.classList.remove('show'); renderStage();
+  toast('Uložené');
+  if(scriptUrl && scriptUrl!==oldUrl) fetchBoxes(false);
 });
 
 //////////////////// EXPORT ////////////////////
@@ -502,10 +646,11 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
   exportModal.classList.add('show');
 });
 function buildCsv(){
-  const rows=[['kod','pocet','cas']]; const now=new Date().toISOString();
-  items.forEach(i=>rows.push([i.code,i.qty,now]));
+  const rows=[['umiestnenie','kod','pocet','cas']]; const now=new Date().toISOString();
+  items.forEach(i=>rows.push([csvCell(i.loc||''),i.code,i.qty,now]));
   return rows.map(r=>r.join(',')).join('\n');
 }
+function csvCell(s){ s=String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
 document.getElementById('exportCsv').addEventListener('click',()=>{
   const blob=new Blob([buildCsv()],{type:'text/csv'});
   const a=document.createElement('a');
@@ -539,7 +684,10 @@ function toast(msg){
 }
 
 //////////////////// ŠTART ////////////////////
-renderStage(); renderList();
+renderLocOptions();
+renderStage();
+renderList();
+if(scriptUrl) fetchBoxes(false);   // automaticky pri otvorení appky
 </script>
 </body>
 </html>
