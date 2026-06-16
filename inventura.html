@@ -493,8 +493,13 @@ function commitStage(refocus){
   resetStage(); lastFinal='';
   heard.textContent='Klikni na mikrofón a diktuj…'; heard.classList.add('empty');
   renderList();
-  // po uložení (na PC) vráť kurzor do poľa kódu pre rýchle zadávanie ďalšieho
-  if(refocus){ setTimeout(()=>{ numEdit.focus(); },0); }
+  // po uložení (na PC) vyčisti pole a vráť doň kurzor pre rýchle zadávanie ďalšieho.
+  // (renderStage nedotkne pole, kým je v ňom kurzor, preto ho vyčistíme tu ručne.)
+  if(refocus){
+    numEdit.value='';
+    numEdit.classList.add('empty');
+    setTimeout(()=>{ numEdit.focus(); },0);
+  }
 }
 
 //////////////////// UMIESTNENIE / KRABICE ////////////////////
