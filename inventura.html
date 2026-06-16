@@ -92,6 +92,9 @@
 
   .list{flex:1;overflow-y:auto;padding:8px 12px 120px}
   .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line)}
+  .row.synced{opacity:.5}
+  .row.synced .rc{text-decoration:none}
+  .row .expmark{flex:0 0 auto;color:var(--ok);font-size:13px;font-weight:700}
   .row .rcwrap{display:flex;flex-direction:column;gap:2px;min-width:0}
   .row .rc{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.02em}
   .row .rc .p.MV{color:var(--mv)} .row .rc .p.NY{color:var(--ny)} .row .rc .p.unk{color:var(--ink-dim)}
@@ -246,11 +249,11 @@
     <h2>Export inventúry</h2>
     <p id="exportInfo">—</p>
     <div class="sheet-actions">
-      <button class="btn" id="exportCsv">Stiahnuť CSV</button>
-      <button class="btn primary" id="exportSend">Odoslať do Sheetu</button>
+      <button class="btn" id="exportCsv">Stiahnuť CSV (stav)</button>
+      <button class="btn primary" id="exportSend">Odoslať prírastky</button>
     </div>
     <div class="sheet-actions" style="margin-top:10px">
-      <button class="btn" id="exportClear" style="flex:1;color:var(--bad)">Vymazať všetko po exporte</button>
+      <button class="btn" id="exportClear" style="flex:1;color:var(--bad)">Vymazať odoslané zo zoznamu</button>
     </div>
   </div>
 </div>
@@ -440,7 +443,7 @@ function commitStage(){
   // pripočítaj len ak rovnaký kód v rovnakej krabici
   const ex=items.find(i=>i.code===code && i.loc===currentLoc);
   if(ex){ ex.qty+=stage.qty; toast('Pripočítané '+code+' → '+ex.qty+' ks'); }
-  else { items.unshift({code, qty:stage.qty, loc:currentLoc}); toast('Pridané '+code+' ('+stage.qty+' ks)'); }
+  else { items.unshift({code, qty:stage.qty, loc:currentLoc, sentQty:0}); toast('Pridané '+code+' ('+stage.qty+' ks)'); }
   save();
   resetStage(); lastFinal='';
   heard.textContent='Klikni na mikrofón a diktuj…'; heard.classList.add('empty');
@@ -515,10 +518,15 @@ function renderList(){
   emptyState.style.display='none';
   items.forEach((it,idx)=>{
     if(idx===editingIdx){ listEl.appendChild(buildRowEditor(it,idx)); return; }
-    const row=document.createElement('div'); row.className='row';
+    const pendQ=(it.qty-(it.sentQty||0));
+    const synced=pendQ<=0;
+    let badge='';
+    if((it.sentQty||0)>0 && pendQ>0) badge=' <span class="expmark">+'+pendQ+' na export</span>';
+    else if(synced && (it.sentQty||0)>0) badge=' <span class="expmark">✓ v Sheete</span>';
+    const row=document.createElement('div'); row.className='row'+(synced && (it.sentQty||0)>0?' synced':'');
     row.innerHTML=
       '<div class="rcwrap">'+
-        '<div class="rc">'+fmtCodeList(it.code)+'</div>'+
+        '<div class="rc">'+fmtCodeList(it.code)+badge+'</div>'+
         (it.loc?'<div class="rloc">📦 '+escapeHtml(it.loc)+'</div>':'')+
       '</div>'+
       '<button class="edit" data-a="edit" data-i="'+idx+'">✎</button>'+
@@ -566,7 +574,11 @@ function buildRowEditor(it,idx){
   const ok=document.createElement('button'); ok.className='btn primary'; ok.textContent='Uložiť';
   ok.addEventListener('click',()=>{
     if(!editBuf.number){ toast('Číslo nemôže byť prázdne'); return; }
-    items[idx].code=(editBuf.prefix||'')+editBuf.number;
+    const newCode=(editBuf.prefix||'')+editBuf.number;
+    if(newCode!==items[idx].code){
+      items[idx].code=newCode;
+      items[idx].sentQty=0;   // zmenený kód => pošle sa celý pod novým kódom
+    }
     editingIdx=-1; save(); renderList(); toast('Kód upravený');
   });
   act.appendChild(cancel); act.appendChild(ok);
@@ -638,14 +650,29 @@ document.getElementById('setupSave').addEventListener('click',()=>{
 
 //////////////////// EXPORT ////////////////////
 const exportModal=document.getElementById('exportModal');
+// položka má prírastok na export, ak qty > sentQty
+function pendingDelta(it){ return it.qty - (it.sentQty||0); }
+function itemsWithDelta(){ return items.filter(i=>pendingDelta(i)!==0); }
+
 document.getElementById('exportBtn').addEventListener('click',()=>{
   if(items.length===0){ toast('Nie je čo exportovať'); return; }
-  document.getElementById('exportInfo').textContent =
-    items.length+' položiek · '+items.reduce((s,i)=>s+i.qty,0)+' ks spolu. '+
-    (scriptUrl?'Odoslať priamo do Google Sheetu, alebo stiahnuť CSV.':'URL Sheetu nie je nastavená — stiahni CSV alebo nastav URL v ⚙.');
+  const pend=itemsWithDelta();
+  const totalDelta=pend.reduce((s,i)=>s+pendingDelta(i),0);
+  let info;
+  if(pend.length===0){
+    info='Všetko je už odoslané do Sheetu. Žiadne nové prírastky. (CSV stiahne aktuálny stav.)';
+  } else {
+    info='Na odoslanie: '+pend.length+' '+(pend.length===1?'položka':'položiek')+
+         ', prírastok spolu '+(totalDelta>=0?'+':'')+totalDelta+' ks. '+
+         'Do Sheetu sa pošle len rozdiel oproti poslednému odoslaniu.';
+  }
+  document.getElementById('exportInfo').textContent = info +
+    (scriptUrl?'':' POZOR: URL Sheetu nie je nastavená — stiahni CSV alebo nastav URL v ⚙.');
   exportModal.classList.add('show');
 });
+
 function buildCsv(){
+  // CSV = aktuálny stav (plné počty), pre tvoju vlastnú potrebu
   const rows=[['umiestnenie','kod','pocet','cas']]; const now=new Date().toISOString();
   items.forEach(i=>rows.push([csvCell(i.loc||''),i.code,i.qty,now]));
   return rows.map(r=>r.join(',')).join('\n');
@@ -656,21 +683,33 @@ document.getElementById('exportCsv').addEventListener('click',()=>{
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='inventura_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click(); toast('CSV stiahnuté');
+  a.click(); toast('CSV stiahnuté (aktuálny stav)');
 });
 document.getElementById('exportSend').addEventListener('click',async ()=>{
   if(!scriptUrl){ toast('Najprv nastav URL v ⚙'); return; }
-  toast('Odosielam…');
+  const pend=itemsWithDelta();
+  if(pend.length===0){ toast('Nič nové — všetko je odoslané'); return; }
+  // pošli len PRÍRASTKY (kód, umiestnenie, rozdiel)
+  const payload=pend.map(i=>({ code:i.code, loc:i.loc||'', qty:pendingDelta(i) }));
+  toast('Odosielam '+pend.length+'…');
   try{
     await fetch(scriptUrl,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({items:items, sentAt:new Date().toISOString()})});
-    toast('Odoslané do Sheetu ✓'); exportModal.classList.remove('show');
+      body:JSON.stringify({items:payload, sentAt:new Date().toISOString()})});
+    // no-cors => odpoveď nečítame; po odoslaní zapamätáme, že sme poslali po aktuálny počet
+    pend.forEach(i=>{ i.sentQty=i.qty; });
+    save(); renderList();
+    toast('Odoslané do Sheetu ✓ ('+pend.length+')'); exportModal.classList.remove('show');
   }catch(e){ toast('Chyba pri odoslaní — skús znova'); }
 });
 document.getElementById('exportClear').addEventListener('click',()=>{
-  if(confirm('Naozaj vymazať všetkých '+items.length+' položiek? Over, že export prebehol.')){
-    items=[]; save(); renderList(); exportModal.classList.remove('show'); toast('Vymazané');
+  // zmaže len položky, ktoré sú celé odoslané (žiadny prírastok čaká)
+  const done=items.filter(i=>pendingDelta(i)===0 && (i.sentQty||0)>0).length;
+  if(done===0){ toast('Žiadne plne odoslané na vymazanie'); return; }
+  if(confirm('Vymazať '+done+' plne odoslaných položiek zo zoznamu? Tie s čakajúcim prírastkom ostanú.')){
+    items=items.filter(i=>!(pendingDelta(i)===0 && (i.sentQty||0)>0));
+    save(); renderList(); exportModal.classList.remove('show');
+    toast('Vymazané ('+done+')');
   }
 });
 [setupModal,exportModal].forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }); });
