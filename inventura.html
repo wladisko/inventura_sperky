@@ -193,7 +193,7 @@
   <div class="numRow">
     <div class="codeWrap">
       <span class="prefixEcho" id="prefixEcho"></span>
-      <input class="numEdit empty" id="numEdit" inputmode="numeric" pattern="[0-9]*" placeholder="––––" autocomplete="off">
+      <input class="numEdit empty" id="numEdit" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" placeholder="––––" autocomplete="off">
     </div>
     <div class="qtyBox">
       <div class="qstep" id="minus">−</div>
@@ -440,23 +440,48 @@ numEdit.addEventListener('focus',()=>{
   const v=numEdit.value; setTimeout(()=>numEdit.setSelectionRange(v.length,v.length),0);
 });
 numEdit.addEventListener('input',()=>{
+  // mobilné klávesnice posielajú Enter ako vložený newline -> ber to ako potvrdenie
+  if(/[\n\r]/.test(numEdit.value)){
+    numEdit.value=numEdit.value.replace(/[\n\r]/g,'').replace(/\D/g,'');
+    stage.number=numEdit.value;
+    if(stageValid()){ numEdit.blur(); commitStage(); return; }
+  }
   numEdit.value=numEdit.value.replace(/\D/g,'');
   stage.number=numEdit.value;
   numEdit.classList.toggle('empty', stage.number.length===0);
   confirmBtn.disabled=!stageValid();
 });
-// Enter na klávesnici uloží položku (rovnako ako tlačidlo ✓)
-numEdit.addEventListener('keydown',(e)=>{
-  if(e.key==='Enter'){
+// Klávesnica v poli kódu:
+//  +  alebo  =  -> počet +1
+//  -            -> počet -1
+//  Enter        -> ulož položku
+// Pokrývame keydown aj keyup, lebo mobilné klávesnice sa líšia.
+function numKeyHandler(e){
+  // Enter
+  if(e.key==='Enter'||e.keyCode===13||e.which===13){
     e.preventDefault();
-    if(stageValid()){ numEdit.blur(); commitStage(); }
+    if(stageValid()){ commitStage(true); }   // true = vráť kurzor do poľa kódu (PC)
+    return;
   }
-});
+  // + / = (na PC klávesnici je + cez Shift, ale prichádza ako '+' alebo '='); numpad '+' tiež
+  if(e.key==='+'||e.key==='='||e.key==='Add'){
+    e.preventDefault();
+    stage.qty++; qtyView.textContent=stage.qty;
+    return;
+  }
+  // - (mínus / numpad mínus)
+  if(e.key==='-'||e.key==='Subtract'){
+    e.preventDefault();
+    if(stage.qty>1){ stage.qty--; qtyView.textContent=stage.qty; }
+    return;
+  }
+}
+numEdit.addEventListener('keydown',numKeyHandler);
 document.getElementById('plus').addEventListener('click',()=>{ stage.qty++; qtyView.textContent=stage.qty; });
 document.getElementById('minus').addEventListener('click',()=>{ if(stage.qty>1){stage.qty--; qtyView.textContent=stage.qty;} });
 
-confirmBtn.addEventListener('click',commitStage);
-function commitStage(){
+confirmBtn.addEventListener('click',()=>commitStage());
+function commitStage(refocus){
   if(!stageValid()) return;
   if(listening){ try{recog.stop();}catch(e){} }
   const code=currentCode();
@@ -468,6 +493,8 @@ function commitStage(){
   resetStage(); lastFinal='';
   heard.textContent='Klikni na mikrofón a diktuj…'; heard.classList.add('empty');
   renderList();
+  // po uložení (na PC) vráť kurzor do poľa kódu pre rýchle zadávanie ďalšieho
+  if(refocus){ setTimeout(()=>{ numEdit.focus(); },0); }
 }
 
 //////////////////// UMIESTNENIE / KRABICE ////////////////////
@@ -600,9 +627,14 @@ function buildRowEditor(it,idx){
   setTimeout(paint,0);
   // číslo
   const nrow=document.createElement('div'); nrow.className='reNum';
-  const ni=document.createElement('input'); ni.inputMode='numeric'; ni.value=editBuf.number;
-  ni.addEventListener('input',()=>{ ni.value=ni.value.replace(/\D/g,''); editBuf.number=ni.value; });
-  ni.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); ni.blur(); ok.click(); } });
+  const ni=document.createElement('input'); ni.inputMode='numeric'; ni.value=editBuf.number; ni.setAttribute('enterkeyhint','done');
+  ni.addEventListener('input',()=>{
+    if(/[\n\r]/.test(ni.value)){ ni.value=ni.value.replace(/[\n\r]/g,'').replace(/\D/g,''); editBuf.number=ni.value; ni.blur(); ok.click(); return; }
+    ni.value=ni.value.replace(/\D/g,''); editBuf.number=ni.value;
+  });
+  function reEnter(e){ if(e.key==='Enter'||e.keyCode===13||e.which===13){ e.preventDefault(); ni.blur(); ok.click(); } }
+  ni.addEventListener('keydown',reEnter);
+  ni.addEventListener('keyup',reEnter);
   const nlbl=document.createElement('span'); nlbl.style.cssText='font-size:12px;color:var(--ink-dim)'; nlbl.textContent='číslo kódu';
   nrow.appendChild(ni); nrow.appendChild(nlbl);
   wrap.appendChild(nrow);
