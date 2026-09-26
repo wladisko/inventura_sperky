@@ -754,7 +754,7 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
 function buildCsv(){
   // CSV = aktuálny stav (plné počty), pre tvoju vlastnú potrebu
   const rows=[['umiestnenie','kod','pocet','cas']]; const now=new Date().toISOString();
-  items.forEach(i=>rows.push([csvCell(i.loc||''),i.code,i.qty,now]));
+  items.forEach(i=>rows.push([csvCell(i.loc||''),String(i.code).toLowerCase(),i.qty,now]));
   return rows.map(r=>r.join(',')).join('\n');
 }
 function csvCell(s){ s=String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
@@ -788,7 +788,7 @@ document.getElementById('exportSend').addEventListener('click',()=>{
   document.getElementById('confirmSummary').innerHTML=html;
 
   // priprav payload (kód, umiestnenie, rozdiel)
-  pendingPayload={ pend, items: pend.map(i=>({ code:i.code, loc:i.loc||'', qty:pendingDelta(i) })) };
+  pendingPayload={ pend, items: pend.map(i=>({ code:String(i.code).toLowerCase(), loc:i.loc||'', qty:pendingDelta(i) })) };
 
   exportModal.classList.remove('show');
   document.getElementById('confirmModal').classList.add('show');
